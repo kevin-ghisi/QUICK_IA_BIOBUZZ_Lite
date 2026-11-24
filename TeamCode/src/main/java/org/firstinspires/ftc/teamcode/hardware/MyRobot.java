@@ -14,7 +14,7 @@ import org.firstinspires.ftc.teamcode.commandbase.subsystem.Transfer;
 import org.firstinspires.ftc.teamcode.commandbase.subsystem.Turret;
 
 /** Raiz de composição: agrupa os subsistemas usados por um único OpMode. */
-public final class MyRobot {
+public class MyRobot {
     public final Drive drive;
     public final Intake intake;
     public final Transfer transfer;

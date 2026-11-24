@@ -14,7 +14,7 @@ import org.firstinspires.ftc.teamcode.util.MathUtils;
 
 /** Autônomo enxuto: percorre a rota de pontuação existente e entrega a pose ao TeleOp. */
 @Autonomous(name = "BIOBUZZ Lite - Auto", group = "Autonomous")
-public final class Auto_PoseHandoff extends CommandOpMode {
+public class Auto_PoseHandoff extends CommandOpMode {
     private MyRobot robot;
     private boolean blueWasPressed;
     private boolean redWasPressed;

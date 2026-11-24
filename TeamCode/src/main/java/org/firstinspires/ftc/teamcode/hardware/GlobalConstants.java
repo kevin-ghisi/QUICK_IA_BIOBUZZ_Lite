@@ -11,7 +11,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
  * Configuração editável do robô, separada em blocos por mecanismo.
  * As configurações Pedro (Mecanum, Pinpoint e Foresight) ficam em pedroPathing/Constants.java.
  */
-public final class GlobalConstants {
+public class GlobalConstants {
     private GlobalConstants() { }
 
     // ============================================================================

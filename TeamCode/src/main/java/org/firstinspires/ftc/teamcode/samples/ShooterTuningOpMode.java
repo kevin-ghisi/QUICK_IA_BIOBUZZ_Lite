@@ -13,7 +13,7 @@ import org.firstinspires.ftc.teamcode.util.TimeUtils;
 
 /** Bancada fechada para ajustar velocity PIDF no Panels mantendo a trava física bloqueada. */
 @TeleOp(name = "SETUP - Shooter PIDF Panels", group = "Setup")
-public final class ShooterTuningOpMode extends OpMode {
+public class ShooterTuningOpMode extends OpMode {
     private static final double TELEMETRY_INTERVAL_MILLISECONDS = 100.0;
     private MyRobot robot;
     private VoltageSensor battery;

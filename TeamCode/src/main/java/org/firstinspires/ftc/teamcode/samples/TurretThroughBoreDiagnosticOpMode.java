@@ -14,7 +14,7 @@ import org.firstinspires.ftc.teamcode.hardware.TurretEncoderDiagnosticConfig;
  * dos controladores; use o transferidor e ajuste o ângulo físico no Panels.
  */
 @TeleOp(name = "TESTE - Encoder Through Bore torre", group = "Testes")
-public final class TurretThroughBoreDiagnosticOpMode extends OpMode {
+public class TurretThroughBoreDiagnosticOpMode extends OpMode {
     private final TelemetryManager panelsTelemetry = PanelsTelemetry.INSTANCE.getTelemetry();
     /** Encoder integrado do HD Hex, usado pelo controlador da torre. */
     private DcMotorEx turretMotorEncoder;

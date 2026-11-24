@@ -10,7 +10,7 @@ import org.firstinspires.ftc.teamcode.util.TimeUtils;
 
 /** OpMode de bancada para ajustar o PID horizontal da torre usando os campos ao vivo do Panels. */
 @TeleOp(name = "SETUP - Turret PID Panels", group = "Setup")
-public final class TurretPidTuningOpMode extends OpMode {
+public class TurretPidTuningOpMode extends OpMode {
     private static final double TELEMETRY_INTERVAL_MILLISECONDS = 100.0;
     private MyRobot robot;
     private boolean pidEnabled;

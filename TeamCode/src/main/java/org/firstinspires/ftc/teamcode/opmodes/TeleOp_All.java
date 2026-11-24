@@ -15,7 +15,7 @@ import org.firstinspires.ftc.teamcode.util.FieldTargetSelector;
 
 /** Controles de partida para um operador, todos no Gamepad 1. */
 @TeleOp(name = "BIOBUZZ Lite - TeleOp", group = "TeleOp")
-public final class TeleOp_All extends OpMode {
+public class TeleOp_All extends OpMode {
     private MyRobot robot;
     private final FieldTargetSelector targetSelector = new FieldTargetSelector();
     private GlobalConstants.FieldTarget target;
