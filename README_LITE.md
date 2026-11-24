@@ -45,7 +45,7 @@ O alvo da torre acompanha a aliança selecionada e muda para a coordenada reflet
 - A torre usa o encoder integrado do REV HD Hex como leitura-base. O REV Through Bore ligado ao canal de encoder `intake` fornece a leitura de verificação e corrige o ângulo usado pela mira.
 - O sensor REV da entrada da rampa conta passagens estáveis e para a coleta ao alcançar quatro bolas. O Blinkin indica coleta, carregador cheio, shooter pronto, tiro e falha de sensor.
 
-O V4 não guarda reduções dos motores de intake/transfer/shooter como números no Java; os valores de velocidade programados e os nomes dos motores foram mantidos como encontrados. O HD Hex usa 28 contagens por volta do eixo do motor. A escala da torre no novo código considera a caixa 3:1 e reutiliza a relação externa medida no V4 (`20.025` contagens de Through Bore por volta de saída). Confirme a diferença dos encoders na bancada antes de habilitar mira automática.
+O V4 não guarda reduções dos motores de intake/transfer/shooter como números no Java; os valores de velocidade programados e os nomes dos motores foram mantidos como encontrados. O encoder integrado da torre usa os **497,896 ticks por volta de saída já calibrados**. O Through Bore ainda não foi calibrado: sua escala inicial é calculada com 8.192 counts/rev e a engrenagem de 35 dentes no anel de 85 dentes (`8192 × 85 / 35 ≈ 19.894,86 ticks por volta da torre`). Use `TurretThroughBoreDiagnosticOpMode` para ajustar essa escala e o sinal antes de confiar na correção externa.
 
 ## Configuração de hardware que deve coincidir
 

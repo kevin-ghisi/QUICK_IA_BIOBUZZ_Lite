@@ -128,24 +128,23 @@ public final class GlobalConstants {
     public static final String TURRET_MOTOR_NAME = "turret";
     /** Invertido para o ângulo positivo do encoder corresponder à rotação física para a esquerda. */
     public static final boolean TURRET_MOTOR_REVERSED = true;
-    /**
-     * Escala efetiva medida com o REV Through Bore já montado na transmissão da torre.
-     * Na conferência, 90 graus físicos produziram cerca de 220 graus crus no encoder:
-     * 8192 * 220 / 90 = 20024,9 contagens por volta da torre.
-     */
-    public static final double TURRET_TICKS_PER_OUTPUT_REV = 20025.0;
+    /** Escala calibrada do encoder integrado: ticks do HD Hex para uma volta completa da torre. */
+    public static final double TURRET_MOTOR_TICKS_PER_OUTPUT_REV = 497.896;
     /** A leitura externa fica no encoder da porta intake, que não é usado pelo mecanismo intake. */
     public static final String TURRET_THROUGH_BORE_ENCODER_NAME = INTAKE_MOTOR_NAME;
     /** REV HD Hex fornece 28 contagens por volta do eixo do motor, antes das reduções. */
     public static final double TURRET_MOTOR_TICKS_PER_MOTOR_REV = 28.0;
     public static final double TURRET_MOTOR_GEAR_REDUCTION = 3.0;
     public static final double TURRET_THROUGH_BORE_COUNTS_PER_SENSOR_REV = 8192.0;
+    public static final int TURRET_MOTOR_PINION_TEETH = 25;
+    public static final int TURRET_RING_GEAR_TEETH = 85;
+    public static final int TURRET_THROUGH_BORE_GEAR_TEETH = 35;
+    /** Escala nominal externa, calculada pela relação 85:35; ainda precisa de calibração física. */
+    public static final double TURRET_THROUGH_BORE_TICKS_PER_OUTPUT_REV =
+            TURRET_THROUGH_BORE_COUNTS_PER_SENSOR_REV
+                    * TURRET_RING_GEAR_TEETH / (double) TURRET_THROUGH_BORE_GEAR_TEETH;
     /** Corrige o sinal invertido pelo sentido configurado no dispositivo intake. */
     public static final double TURRET_THROUGH_BORE_ENCODER_SIGN = -1.0;
-    /** Escala do encoder integrado incluindo a mesma transmissão do sensor até o anel da torre. */
-    public static final double TURRET_MOTOR_TICKS_PER_OUTPUT_REV =
-            TURRET_MOTOR_TICKS_PER_MOTOR_REV * TURRET_MOTOR_GEAR_REDUCTION
-                    * TURRET_TICKS_PER_OUTPUT_REV / TURRET_THROUGH_BORE_COUNTS_PER_SENSOR_REV;
     /** Limite de software com margem em relação ao curso mecânico estimado de 320 graus. */
     public static final double TURRET_MAX_ANGLE_DEGREES = 160;
     public static final double TURRET_MANUAL_POWER = 0.40;
