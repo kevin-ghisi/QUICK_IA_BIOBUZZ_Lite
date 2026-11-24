@@ -13,6 +13,8 @@ Projeto FTC simplificado a partir do branch `V4` do `QUICK_IA_BIOBUZZ`. As bibli
 - `TeamCode/.../opmodes/Auto_PoseHandoff.java`: rota simples que entrega a pose final ao TeleOp.
 - `TeamCode/.../util/`: matemática, seleção de alvo e relógio monotônico.
 
+O TeleOp vincula os botões do Gamepad 1 a `InstantCommand`s do SolverLib, com requisitos dos subsistemas envolvidos. A preparação e o disparo formam uma sequência de comandos; direção, mira automática e feedback usam comandos contínuos do scheduler.
+
 ## Controles
 
 | Gamepad | Controle | Ação |
