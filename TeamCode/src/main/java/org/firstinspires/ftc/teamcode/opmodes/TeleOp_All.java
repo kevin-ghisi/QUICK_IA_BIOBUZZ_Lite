@@ -21,7 +21,7 @@ import org.firstinspires.ftc.teamcode.hardware.GlobalConstants;
 import org.firstinspires.ftc.teamcode.hardware.MyRobot;
 import org.firstinspires.ftc.teamcode.util.FieldTargetSelector;
 
-/** Controles de partida de um operador, com comandos do SolverLib vinculados ao Gamepad 1. */
+/** TeleOp de um operador usando diretamente as bindings do GamepadEx/SolverLib. */
 @TeleOp(name = "BIOBUZZ Lite - TeleOp", group = "TeleOp")
 public final class TeleOp_All extends OpMode {
     private final CommandScheduler scheduler = CommandScheduler.getInstance();
@@ -29,7 +29,6 @@ public final class TeleOp_All extends OpMode {
     private MyRobot robot;
     private GamepadEx driver;
     private GlobalConstants.FieldTarget target;
-    private boolean started;
     private boolean gateOpen;
     private String poseOrigin = "pose inicial configurada";
 
@@ -39,8 +38,7 @@ public final class TeleOp_All extends OpMode {
         robot = new MyRobot(hardwareMap);
         driver = new GamepadEx(gamepad1);
         robot.initializeForOpMode();
-        configureDefaultCommands();
-        configureGamepadCommands();
+
         telemetry.addLine("INIT: G1 D-pad esquerdo/direito seleciona BLUE/RED");
         telemetry.addLine("G1: sticks dirigem | A coleta | X descarrega | B para | Y prepara/dispara");
         telemetry.addLine("G1: RB alterna mira | BACK redefine pose | START calibra zero frontal da torre");
@@ -50,125 +48,13 @@ public final class TeleOp_All extends OpMode {
         telemetry.update();
     }
 
-    private void configureDefaultCommands() {
-        robot.drive.setDefaultCommand(new RunCommand(() -> {
-            if (!started) {
-                robot.drive.driveManual(new DrivePowers(0, 0, 0));
-                return;
-            }
-            double turn = driver.getButton(GamepadKeys.Button.LEFT_BUMPER) ? 0.0 : -driver.getRightX();
-            robot.drive.driveManual(new DrivePowers(-driver.getLeftY(), -driver.getLeftX(), turn));
-        }, robot.drive));
-
-        robot.turret.setDefaultCommand(new RunCommand(() -> {
-            if (!started) return;
-            Pose pose = robot.drive.getPose();
-            target = targetSelector.update(pose.y());
-            if (driver.getButton(GamepadKeys.Button.LEFT_BUMPER) && Math.abs(driver.getRightX()) > 0.05) {
-                robot.turret.setManualPower(-driver.getRightX());
-            } else if (robot.turret.isAutoAimEnabled()) {
-                robot.turret.aimAtFieldTarget(pose, target.x, target.y);
-            } else {
-                robot.turret.stop();
-            }
-        }, robot.turret));
-
-        robot.feedback.setDefaultCommand(new RunCommand(() -> robot.feedback.update(
-                robot.gamePieces.getState(), robot.magazine, robot.gamePieces.isReadyToShoot(),
-                robot.gamePieces.isFlowerCollection()), robot.feedback));
-    }
-
-    private void configureGamepadCommands() {
-        Trigger initMode = new Trigger(() -> !started);
-        Trigger matchMode = new Trigger(() -> started
-                && !driver.getButton(GamepadKeys.Button.LEFT_BUMPER));
-        Trigger manualMode = new Trigger(() -> started
-                && driver.getButton(GamepadKeys.Button.LEFT_BUMPER));
-
-        bind(initMode.and(button(GamepadKeys.Button.DPAD_LEFT)),
-                () -> GlobalConstants.alliance = GlobalConstants.Alliance.BLUE);
-        bind(initMode.and(button(GamepadKeys.Button.DPAD_RIGHT)),
-                () -> GlobalConstants.alliance = GlobalConstants.Alliance.RED);
-
-        // Comandos de jogo em modo normal.
-        bind(matchMode.and(button(GamepadKeys.Button.A)), robot.gamePieces::startFloorCollection,
-                collectionRequirements());
-        bind(matchMode.and(button(GamepadKeys.Button.X)), robot.gamePieces::reverseManualIntake,
-                collectionRequirements());
-        bind(matchMode.and(button(GamepadKeys.Button.B)), robot.gamePieces::cancelToSafe,
-                safeRequirements());
-        matchMode.and(button(GamepadKeys.Button.Y)).whenActive(new SequentialCommandGroup(
-                new InstantCommand(robot.gamePieces::prepareShot, collectionRequirements()),
-                new WaitUntilCommand(robot.gamePieces::isReadyToShoot),
-                new InstantCommand(robot.gamePieces::startFiring, collectionRequirements())));
-
-        bind(matchMode.and(button(GamepadKeys.Button.DPAD_UP)), robot.flowerCollector::deploy,
-                robot.flowerCollector);
-        bind(matchMode.and(button(GamepadKeys.Button.DPAD_DOWN)), robot.flowerCollector::retract,
-                robot.flowerCollector);
-        bind(matchMode.and(button(GamepadKeys.Button.DPAD_RIGHT)), () -> {
-            gateOpen = true;
-            robot.ballGate.unlock();
-        }, robot.ballGate);
-        bind(matchMode.and(button(GamepadKeys.Button.DPAD_LEFT)), () -> {
-            gateOpen = false;
-            robot.ballGate.lock();
-        }, robot.ballGate);
-        bind(matchMode.and(button(GamepadKeys.Button.RIGHT_BUMPER)),
-                () -> robot.turret.setAutoAimEnabled(!robot.turret.isAutoAimEnabled()), robot.turret);
-        bind(matchMode.and(button(GamepadKeys.Button.BACK)), this::resetPose, robot.drive);
-        bind(matchMode.and(button(GamepadKeys.Button.START)), this::calibrateTurretZero, robot.turret);
-
-        // Entrar no modo individual interrompe o fluxo composto; depois cada botão age diretamente.
-        bind(new Trigger(() -> started && driver.getButton(GamepadKeys.Button.LEFT_BUMPER)),
-                robot.gamePieces::cancelToSafe,
-                safeRequirements());
-        bind(manualMode.and(button(GamepadKeys.Button.A)),
-                () -> robot.intake.setState(Intake.State.FORWARD),
-                robot.intake);
-        bind(manualMode.and(button(GamepadKeys.Button.B)),
-                () -> robot.intake.setState(Intake.State.REVERSE),
-                robot.intake);
-        bind(manualMode.and(button(GamepadKeys.Button.X)),
-                () -> robot.intake.setState(Intake.State.STOP),
-                robot.intake);
-        bind(manualMode.and(button(GamepadKeys.Button.DPAD_RIGHT)),
-                () -> robot.transfer.setState(Transfer.State.FORWARD),
-                robot.transfer);
-        bind(manualMode.and(button(GamepadKeys.Button.DPAD_LEFT)),
-                () -> robot.transfer.setState(Transfer.State.REVERSE),
-                robot.transfer);
-        bind(manualMode.and(button(GamepadKeys.Button.DPAD_DOWN)),
-                () -> robot.transfer.setState(Transfer.State.STOP),
-                robot.transfer);
-        bind(new Trigger(() -> started && driver.getButton(GamepadKeys.Button.LEFT_BUMPER)
-                        && driver.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.5),
-                robot.gamePieces::startShooterManual, robot.gamePieces, robot.shooter);
-        bind(new Trigger(() -> started && driver.getButton(GamepadKeys.Button.LEFT_BUMPER)
-                        && driver.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.5),
-                robot.shooter::stop, robot.shooter);
-    }
-
-    private Trigger button(GamepadKeys.Button button) {
-        return driver.getGamepadButton(button);
-    }
-
-    private void bind(Trigger trigger, Runnable action, Subsystem... requirements) {
-        trigger.whenActive(new InstantCommand(action, requirements));
-    }
-
-    private Subsystem[] collectionRequirements() {
-        return new Subsystem[] {robot.gamePieces, robot.intake, robot.transfer, robot.shooter,
-                robot.ballGate, robot.flowerCollector};
-    }
-
-    private Subsystem[] safeRequirements() {
-        return new Subsystem[] {robot.gamePieces, robot.intake, robot.transfer, robot.shooter,
-                robot.ballGate, robot.flowerCollector};
-    }
-
     @Override public void init_loop() {
-        scheduler.run();
+        if (driver.getButton(GamepadKeys.Button.DPAD_LEFT)) {
+            GlobalConstants.alliance = GlobalConstants.Alliance.BLUE;
+        }
+        if (driver.getButton(GamepadKeys.Button.DPAD_RIGHT)) {
+            GlobalConstants.alliance = GlobalConstants.Alliance.RED;
+        }
         telemetry.addData("Aliança", GlobalConstants.alliance);
         telemetry.update();
     }
@@ -184,33 +70,130 @@ public final class TeleOp_All extends OpMode {
         targetSelector.reset(robot.drive.getPose().y());
         target = targetSelector.update(robot.drive.getPose().y());
         robot.turret.setAutoAimEnabled(robot.turret.isForwardZeroCalibrated());
-        started = true;
-    }
 
-    @Override public void loop() {
-        scheduler.run();
-        publishTelemetry(robot.drive.getPose());
-    }
+        robot.drive.setDefaultCommand(new RunCommand(() -> robot.drive.driveManual(new DrivePowers(
+                -driver.getLeftY(), -driver.getLeftX(),
+                driver.getButton(GamepadKeys.Button.LEFT_BUMPER) ? 0 : -driver.getRightX())), robot.drive));
+        robot.turret.setDefaultCommand(new RunCommand(() -> {
+            Pose pose = robot.drive.getPose();
+            target = targetSelector.update(pose.y());
+            if (driver.getButton(GamepadKeys.Button.LEFT_BUMPER) && Math.abs(driver.getRightX()) > 0.05) {
+                robot.turret.setManualPower(-driver.getRightX());
+            } else if (robot.turret.isAutoAimEnabled()) {
+                robot.turret.aimAtFieldTarget(pose, target.x, target.y);
+            } else {
+                robot.turret.stop();
+            }
+        }, robot.turret));
+        robot.feedback.setDefaultCommand(new RunCommand(() -> robot.feedback.update(
+                robot.gamePieces.getState(), robot.magazine, robot.gamePieces.isReadyToShoot(),
+                robot.gamePieces.isFlowerCollection()), robot.feedback));
 
-    private void resetPose() {
-        robot.drive.setPose(GlobalConstants.TURRET_RESET_POSE);
-        targetSelector.reset(GlobalConstants.TURRET_RESET_POSE.y());
-        poseOrigin = "pose de reset da torre";
-    }
+        // A/B/X/Y em jogo principal. LB desvia os mesmos botões para controle individual.
+        driver.getGamepadButton(GamepadKeys.Button.A)
+                .and(driver.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER).negate())
+                .whenActive(new InstantCommand(robot.gamePieces::startFloorCollection,
+                        robot.gamePieces, robot.intake, robot.transfer, robot.shooter,
+                        robot.ballGate, robot.flowerCollector));
+        driver.getGamepadButton(GamepadKeys.Button.X)
+                .and(driver.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER).negate())
+                .whenActive(new InstantCommand(robot.gamePieces::reverseManualIntake,
+                        robot.gamePieces, robot.intake, robot.transfer, robot.shooter,
+                        robot.ballGate, robot.flowerCollector));
+        driver.getGamepadButton(GamepadKeys.Button.B)
+                .and(driver.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER).negate())
+                .whenActive(new InstantCommand(robot.gamePieces::cancelToSafe,
+                        robot.gamePieces, robot.intake, robot.transfer, robot.shooter,
+                        robot.ballGate, robot.flowerCollector));
+        driver.getGamepadButton(GamepadKeys.Button.Y)
+                .and(driver.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER).negate())
+                .whenActive(new SequentialCommandGroup(
+                        new InstantCommand(robot.gamePieces::prepareShot,
+                                robot.gamePieces, robot.intake, robot.transfer, robot.shooter,
+                                robot.ballGate, robot.flowerCollector),
+                        new WaitUntilCommand(robot.gamePieces::isReadyToShoot),
+                        new InstantCommand(robot.gamePieces::startFiring,
+                                robot.gamePieces, robot.intake, robot.transfer, robot.shooter,
+                                robot.ballGate, robot.flowerCollector)));
 
-    private void calibrateTurretZero() {
-        boolean driveStopped = Math.abs(driver.getLeftX()) < 0.05
-                && Math.abs(driver.getLeftY()) < 0.05 && Math.abs(driver.getRightX()) < 0.05;
-        if (driveStopped && !robot.turret.isAutoAimEnabled()) {
-            robot.turret.calibrateForwardZero();
-            robot.turret.setAutoAimEnabled(true);
-            poseOrigin = "zero frontal da torre recalibrado";
-        }
+        // Coletor e gate no D-pad; o bumper esquerdo usa o D-pad para controlar transfer.
+        driver.getGamepadButton(GamepadKeys.Button.DPAD_UP)
+                .and(driver.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER).negate())
+                .whenActive(new InstantCommand(robot.flowerCollector::deploy, robot.flowerCollector));
+        driver.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
+                .and(driver.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER).negate())
+                .whenActive(new InstantCommand(robot.flowerCollector::retract, robot.flowerCollector));
+        driver.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
+                .and(driver.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER).negate())
+                .whenActive(new InstantCommand(() -> { gateOpen = true; robot.ballGate.unlock(); }, robot.ballGate));
+        driver.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
+                .and(driver.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER).negate())
+                .whenActive(new InstantCommand(() -> { gateOpen = false; robot.ballGate.lock(); }, robot.ballGate));
+
+        // Cancela a operação composta primeiro; um botão mantido pode então ajustar um mecanismo.
+        driver.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER).whenPressed(
+                new InstantCommand(robot.gamePieces::cancelToSafe,
+                        robot.gamePieces, robot.intake, robot.transfer, robot.shooter,
+                        robot.ballGate, robot.flowerCollector));
+
+        // D-pad e botões de ajuste individual enquanto LB estiver pressionado.
+        driver.getGamepadButton(GamepadKeys.Button.A)
+                .and(driver.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER))
+                .whenActive(new InstantCommand(() -> robot.intake.setState(Intake.State.FORWARD), robot.intake));
+        driver.getGamepadButton(GamepadKeys.Button.B)
+                .and(driver.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER))
+                .whenActive(new InstantCommand(() -> robot.intake.setState(Intake.State.REVERSE), robot.intake));
+        driver.getGamepadButton(GamepadKeys.Button.X)
+                .and(driver.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER))
+                .whenActive(new InstantCommand(() -> robot.intake.setState(Intake.State.STOP), robot.intake));
+        driver.getGamepadButton(GamepadKeys.Button.DPAD_RIGHT)
+                .and(driver.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER))
+                .whenActive(new InstantCommand(() -> robot.transfer.setState(Transfer.State.FORWARD), robot.transfer));
+        driver.getGamepadButton(GamepadKeys.Button.DPAD_LEFT)
+                .and(driver.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER))
+                .whenActive(new InstantCommand(() -> robot.transfer.setState(Transfer.State.REVERSE), robot.transfer));
+        driver.getGamepadButton(GamepadKeys.Button.DPAD_DOWN)
+                .and(driver.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER))
+                .whenActive(new InstantCommand(() -> robot.transfer.setState(Transfer.State.STOP), robot.transfer));
+
+        driver.getGamepadButton(GamepadKeys.Button.RIGHT_BUMPER)
+                .and(driver.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER).negate())
+                .whenActive(new InstantCommand(
+                        () -> robot.turret.setAutoAimEnabled(!robot.turret.isAutoAimEnabled()), robot.turret));
+        driver.getGamepadButton(GamepadKeys.Button.BACK)
+                .and(driver.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER).negate())
+                .whenActive(new InstantCommand(() -> {
+                    robot.drive.setPose(GlobalConstants.TURRET_RESET_POSE);
+                    targetSelector.reset(GlobalConstants.TURRET_RESET_POSE.y());
+                    poseOrigin = "pose de reset da torre";
+                }, robot.drive));
+        driver.getGamepadButton(GamepadKeys.Button.START)
+                .and(driver.getGamepadButton(GamepadKeys.Button.LEFT_BUMPER).negate())
+                .whenActive(new InstantCommand(() -> {
+                    if (Math.abs(driver.getLeftX()) < 0.05 && Math.abs(driver.getLeftY()) < 0.05
+                            && Math.abs(driver.getRightX()) < 0.05 && !robot.turret.isAutoAimEnabled()) {
+                        robot.turret.calibrateForwardZero();
+                        robot.turret.setAutoAimEnabled(true);
+                        poseOrigin = "zero frontal da torre recalibrado";
+                    }
+                }, robot.turret));
+        new Trigger(() -> driver.getButton(GamepadKeys.Button.LEFT_BUMPER)
+                && driver.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.5)
+                .whenActive(new InstantCommand(robot.gamePieces::startShooterManual,
+                        robot.gamePieces, robot.shooter));
+        new Trigger(() -> driver.getButton(GamepadKeys.Button.LEFT_BUMPER)
+                && driver.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.5)
+                .whenActive(new InstantCommand(robot.shooter::stop, robot.shooter));
     }
 
     private Pose teleopStartPose() {
         return GlobalConstants.alliance == GlobalConstants.Alliance.BLUE
                 ? GlobalConstants.BLUE_FLOWER_START_POSE : GlobalConstants.RED_FLOWER_START_POSE;
+    }
+
+    @Override public void loop() {
+        scheduler.run();
+        publishTelemetry(robot.drive.getPose());
     }
 
     private void publishTelemetry(Pose pose) {
