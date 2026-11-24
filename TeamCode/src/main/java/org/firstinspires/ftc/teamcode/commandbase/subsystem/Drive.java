@@ -10,7 +10,6 @@ import com.seattlesolvers.solverslib.pedroCommand.FollowPathCommand;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.hardware.GlobalConstants;
-import org.firstinspires.ftc.teamcode.util.MathUtils;
 
 /** Chassi Mecanum e localização Pinpoint, pertencentes a uma instância de MyRobot. */
 public final class Drive extends SubsystemBase {
@@ -29,42 +28,6 @@ public final class Drive extends SubsystemBase {
     /** Envia potência robot-centric: frente, strafe lateral e rotação do próprio chassi. */
     public void driveManual(DrivePowers powers) {
         follower.manual(powers);
-    }
-
-    /**
-     * Alinha o robô a uma pose-alvo com correção proporcional em coordenadas de campo.
-     * Converte o erro de campo para frente/strafe robot-centric antes de comandar o Mecanum.
-     */
-    public void driveToPose(Pose targetPose) {
-        Pose current = getPose();
-        double errorX = targetPose.x() - current.x();
-        double errorY = targetPose.y() - current.y();
-        double cos = Math.cos(current.heading());
-        double sin = Math.sin(current.heading());
-        double forwardError = errorX * cos + errorY * sin;
-        double strafeError = -errorX * sin + errorY * cos;
-
-        double forward = forwardError * GlobalConstants.SHOT_ALIGN_TRANSLATION_KP;
-        double strafe = strafeError * GlobalConstants.SHOT_ALIGN_TRANSLATION_KP;
-        double magnitude = Math.hypot(forward, strafe);
-        if (magnitude > GlobalConstants.SHOT_ALIGN_MAX_POWER) {
-            double scale = GlobalConstants.SHOT_ALIGN_MAX_POWER / magnitude;
-            forward *= scale;
-            strafe *= scale;
-        }
-        double headingError = MathUtils.wrapRadians(targetPose.heading() - current.heading());
-        double turn = MathUtils.clamp(headingError * GlobalConstants.SHOT_ALIGN_HEADING_KP,
-                -GlobalConstants.SHOT_ALIGN_MAX_POWER, GlobalConstants.SHOT_ALIGN_MAX_POWER);
-        follower.manual(new DrivePowers(forward, strafe, turn));
-    }
-
-    /** Confirma se o chassi está dentro das tolerâncias lineares e angulares do pose assist. */
-    public boolean isAtPose(Pose targetPose) {
-        Pose current = getPose();
-        double distanceError = Math.hypot(targetPose.x() - current.x(), targetPose.y() - current.y());
-        double headingError = Math.abs(MathUtils.wrapRadians(targetPose.heading() - current.heading()));
-        return distanceError <= GlobalConstants.SHOT_ALIGN_POSITION_TOLERANCE_INCHES
-                && headingError <= Math.toRadians(GlobalConstants.SHOT_ALIGN_HEADING_TOLERANCE_DEGREES);
     }
 
     /** Cria um comando Pedro para seguir o caminho informado. */

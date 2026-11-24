@@ -6,7 +6,6 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.seattlesolvers.solverslib.hardware.motors.Motor;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-import org.firstinspires.ftc.teamcode.util.MathUtils;
 
 /**
  * Configuração editável do robô, separada em blocos por mecanismo.
@@ -162,7 +161,7 @@ public final class GlobalConstants {
     public static final int TURRET_HOME_CENTER_TOLERANCE_TICKS = 5;
 
     // ============================================================================
-    // SHOOTER E HOOD
+    // SHOOTER
     // ============================================================================
 
     public static final String SHOOTER_MOTOR_NAME = "shooter";
@@ -208,14 +207,6 @@ public final class GlobalConstants {
     /** Nome do REV Blinkin LED Driver na configuração do Control Hub. */
     public static final String BLINKIN_LED_NAME = "blinkin";
 
-    public static final String HOOD_SERVO_NAME = "hood";
-    public static final double HOOD_MIN_POSITION = 0.20;
-    public static final double HOOD_MAX_POSITION = 0.75;
-    public static final double HOOD_MANUAL_STEP = 0.01;
-    /** Pontos empíricos distância/posição; substitua com medições reais dos disparos. */
-    public static final double[] HOOD_DISTANCE_INCHES = {24, 48, 72, 96, 120};
-    public static final double[] HOOD_SERVO_POSITIONS = {0.24, 0.34, 0.45, 0.57, 0.68};
-
     // ============================================================================
     // OPMode DE SETUP — DISPOSITIVOS TESTÁVEIS
     // ============================================================================
@@ -226,22 +217,18 @@ public final class GlobalConstants {
             INTAKE_MOTOR_NAME, TRANSFER_MOTOR_NAME, TURRET_MOTOR_NAME, SHOOTER_MOTOR_NAME
     };
     public static final String[] SETUP_SERVO_NAMES = {
-            HOOD_SERVO_NAME,
             FLOWER_COLLECTOR_LEFT_SERVO_NAME, FLOWER_COLLECTOR_RIGHT_SERVO_NAME,
             BALL_GATE_SERVO_NAME
     };
     public static final double[] SETUP_SERVO_MIN_POSITIONS = {
-            HOOD_MIN_POSITION,
             FLOWER_COLLECTOR_LEFT_STOWED_POSITION, FLOWER_COLLECTOR_RIGHT_DEPLOYED_POSITION,
             BALL_GATE_LOCKED_POSITION
     };
     public static final double[] SETUP_SERVO_MAX_POSITIONS = {
-            HOOD_MAX_POSITION,
             FLOWER_COLLECTOR_LEFT_DEPLOYED_POSITION, FLOWER_COLLECTOR_RIGHT_STOWED_POSITION,
             BALL_GATE_OPEN_POSITION
     };
     public static final double[] SETUP_SERVO_INITIAL_POSITIONS = {
-            HOOD_MIN_POSITION,
             FLOWER_COLLECTOR_LEFT_STOWED_POSITION, FLOWER_COLLECTOR_RIGHT_STOWED_POSITION,
             BALL_GATE_LOCKED_POSITION
     };
@@ -306,52 +293,6 @@ public final class GlobalConstants {
     public static final double AUTO_POSITION_2_OFFSET_X_INCHES = 24.0;
     public static final double AUTO_POSITION_2_OFFSET_Y_INCHES = 0.0;
 
-    // ============================================================================
-    // ASSISTÊNCIA DE POSIÇÃO E CHUTE EM MOVIMENTO
-    // ============================================================================
-
-    /** Pose azul de referência para o robô se alinhar antes do chute. Calibrar no campo. */
-    public static final Pose SHOT_STAGING_BLUE_POSE = AUTO_SCORE_POSE;
-    /** Ganho proporcional do assistente de posição em polegadas para potência normalizada. */
-    public static final double SHOT_ALIGN_TRANSLATION_KP = 0.035;
-    /** Ganho proporcional de heading em radianos para potência de giro. */
-    public static final double SHOT_ALIGN_HEADING_KP = 0.8;
-    /** Limite de potência do alinhamento automático; mantenha baixo nos primeiros testes. */
-    public static final double SHOT_ALIGN_MAX_POWER = 0.30;
-    /** Tolerância de posição para liberar a sequência de tiro assistida. */
-    public static final double SHOT_ALIGN_POSITION_TOLERANCE_INCHES = 2.0;
-    /** Tolerância de orientação para liberar a sequência de tiro assistida. */
-    public static final double SHOT_ALIGN_HEADING_TOLERANCE_DEGREES = 4.0;
-    /** Tempo de voo medido da bola, em segundos; valor inicial precisa de calibração física. */
-    public static final double MOVING_SHOT_FLIGHT_TIME_SECONDS = 0.65;
-    /** Pivô da turret relativo ao centro do chassi: frente (+X local), em polegadas. */
-    public static final double TURRET_PIVOT_FORWARD_INCHES = 0.0;
-    /** Pivô da turret relativo ao centro do chassi: esquerda (+Y local), em polegadas. */
-    public static final double TURRET_PIVOT_LEFT_INCHES = 0.0;
-    /** Boca do shooter à frente do pivô, medida ao longo da direção atual da turret. */
-    public static final double SHOOTER_MUZZLE_FORWARD_INCHES = 0.0;
-    /** Boca do shooter à esquerda do pivô, no referencial da turret. */
-    public static final double SHOOTER_MUZZLE_LEFT_INCHES = 0.0;
-    /** Alpha do filtro exponencial da velocidade obtida por diferenças sucessivas do Pinpoint. */
-    public static final double FIELD_VELOCITY_FILTER_ALPHA = 0.25;
-    /** Se habilitado, autônomo pode iniciar tiro enquanto retorna ao alvo, após validação de campo. */
-    public static final boolean AUTO_SHOOT_ON_RETURN_PATH = false;
-    /** Distância máxima em que o autônomo pode iniciar chute móvel (calibrar com a trajetória). */
-    public static final double AUTO_MOVING_SHOT_MAX_RANGE_INCHES = 72.0;
-    /** Prazo para o caminho entrar na janela de tiro móvel antes de cancelar a abertura. */
-    public static final long AUTO_MOVING_SHOT_WAIT_TIMEOUT_MILLISECONDS = 5000;
-
-    /** Devolve a pose de alinhamento, refletida em X quando a seleção é da aliança vermelha. */
-    public static Pose shotStagingPoseForAlliance() {
-        double x = SHOT_STAGING_BLUE_POSE.x();
-        double y = SHOT_STAGING_BLUE_POSE.y();
-        double heading = SHOT_STAGING_BLUE_POSE.heading();
-        if (alliance == Alliance.RED) {
-            x = FIELD_SIZE_INCHES - x;
-            heading = Math.PI - heading;
-        }
-        return new Pose(x, y, MathUtils.wrapRadians(heading));
-    }
     public static final long AUTO_WAIT_MILLISECONDS = 1000;
     public static final double AUTO_PICKUP_MAX_PATH_SPEED = 0.5;
     public static final double AUTO_SCORE_MAX_PATH_SPEED = 1.0;
@@ -379,37 +320,6 @@ public final class GlobalConstants {
         double targetY = alliance == Alliance.BLUE ? BLUE_TARGET_Y : RED_TARGET_Y;
         if (robotCrossedMidline) targetY = FIELD_SIZE_INCHES - targetY;
         return new FieldTarget(targetX, targetY);
-    }
-
-    /**
-     * Calcula a posição do servo por interpolação linear entre medições de distância.
-     * Entre os pontos (d0,p0) e (d1,p1), calcula t=(d-d0)/(d1-d0) e p=p0+t*(p1-p0).
-     * Distâncias fora da tabela usam o ponto extremo mais próximo; o resultado também é limitado
-     * à faixa mecânica HOOD_MIN_POSITION..HOOD_MAX_POSITION.
-     */
-    public static double hoodPositionForDistance(double distanceInches) {
-        int pointCount = Math.min(HOOD_DISTANCE_INCHES.length, HOOD_SERVO_POSITIONS.length);
-        if (pointCount == 0) return HOOD_MIN_POSITION;
-        if (distanceInches <= HOOD_DISTANCE_INCHES[0]) return safeHoodPosition(HOOD_SERVO_POSITIONS[0]);
-
-        for (int upperIndex = 1; upperIndex < pointCount; upperIndex++) {
-            if (distanceInches <= HOOD_DISTANCE_INCHES[upperIndex]) {
-                double lowerDistance = HOOD_DISTANCE_INCHES[upperIndex - 1];
-                double upperDistance = HOOD_DISTANCE_INCHES[upperIndex];
-                double lowerPosition = HOOD_SERVO_POSITIONS[upperIndex - 1];
-                double upperPosition = HOOD_SERVO_POSITIONS[upperIndex];
-                // Reaproveita a fórmula comum para evitar interpoladores diferentes por mecanismo.
-                double interpolated = MathUtils.mapRange(distanceInches,
-                        lowerDistance, upperDistance, lowerPosition, upperPosition);
-                return safeHoodPosition(interpolated);
-            }
-        }
-        return safeHoodPosition(HOOD_SERVO_POSITIONS[pointCount - 1]);
-    }
-
-    /** Limita o comando do hood aos extremos configurados. */
-    public static double safeHoodPosition(double position) {
-        return MathUtils.clamp(position, HOOD_MIN_POSITION, HOOD_MAX_POSITION);
     }
 
     /** Resultado imutável da seleção do alvo no campo. */

@@ -56,7 +56,6 @@ public final class Auto_PoseHandoff extends CommandOpMode {
         Pose pose = robot.drive.getPose();
         if (robot.turret.isAutoAimEnabled()) {
             robot.turret.aimAt(pose);
-            robot.shooter.updateHoodForDistance(robot.turret.getTargetDistanceInches());
         }
         robot.feedback.update(robot.gamePieces.getState(), robot.magazine,
                 robot.gamePieces.isReadyToShoot(), robot.gamePieces.isFlowerCollection());

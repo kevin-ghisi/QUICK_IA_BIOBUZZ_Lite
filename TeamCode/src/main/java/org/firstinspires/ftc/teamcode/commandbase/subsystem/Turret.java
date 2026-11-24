@@ -42,10 +42,6 @@ public final class Turret extends SubsystemBase {
     private double targetY; // Coordenada Y do alvo após escolher aliança e refletir o lado do campo.
     private double targetTurretAngleDegrees; // Ângulo relativo pedido para a torre, limitado mecanicamente.
     private double targetGlobalBearingDegrees; // Direção do alvo no referencial do campo.
-    private double targetDistanceInches; // Distância cartesiana usada pelo ajuste de hood/shooter.
-    private double compensatedAimX;
-    private double compensatedAimY;
-    private double estimatedFlightTimeSeconds;
     private double pidPreviousTargetDegrees = Double.NaN;
     private double lastAppliedPidPower;
     private final PIDController positionPid = new PIDController(
@@ -199,36 +195,12 @@ public final class Turret extends SubsystemBase {
 
     /** Calcula e aplica a correção necessária para apontar ao alvo da aliança. */
     public void aimAt(Pose robotPose) {
-        aimAt(robotPose, 0.0, 0.0, 0.0, false);
-    }
-
-    /**
-     * Compensa a velocidade do robô e a velocidade angular durante o voo estimado da bola.
-     * O alvo não se move; o ponto de mira é adiantado contra o deslocamento da boca do shooter.
-     *
-     *             trajetória da bola -----> ponto do alvo
-     *            /                         (alvo fixo)
-     *       [robô em movimento] -- v*t -->
-     *
-     * O modelo é plano e usa tempo de voo medido empiricamente. Ele não substitui calibrar hood,
-     * velocidade de saída, altura do alvo ou a geometria real da boca do shooter.
-     */
-    public void aimAt(Pose robotPose, double fieldVelocityX, double fieldVelocityY,
-                      double angularVelocity, boolean compensateMotion) {
         GlobalConstants.FieldTarget target = targetSelector.update(robotPose.y());
-        aimAtFieldTarget(robotPose, target.x, target.y, fieldVelocityX, fieldVelocityY,
-                angularVelocity, compensateMotion);
+        aimAtFieldTarget(robotPose, target.x, target.y);
     }
 
     /** Mira para uma coordenada fixa da arena, sem trocar o alvo conforme o lado do robô. */
     public void aimAtFieldTarget(Pose robotPose, double fieldTargetX, double fieldTargetY) {
-        aimAtFieldTarget(robotPose, fieldTargetX, fieldTargetY, 0.0, 0.0, 0.0, false);
-    }
-
-    /** Implementa a mira para coordenada explícita e opcionalmente compensa o movimento do robô. */
-    private void aimAtFieldTarget(Pose robotPose, double fieldTargetX, double fieldTargetY,
-                                  double fieldVelocityX, double fieldVelocityY,
-                                  double angularVelocity, boolean compensateMotion) {
         if (!autoAimEnabled || !forwardZeroCalibrated) { // Sem modo automático ou referência, não existe ângulo confiável.
             stop(); // A condição inválida sempre resulta em motor parado.
             return; // Evita qualquer cálculo baseado em encoder sem zero.
@@ -237,45 +209,9 @@ public final class Turret extends SubsystemBase {
         targetX = fieldTargetX; // Guarda o ponto fixo para conferir a configuração na telemetria.
         targetY = fieldTargetY;
 
-        // --- Geometria da boca no campo ---
-        // O pivô é descrito no referencial local do chassi: +X frente, +Y esquerda.
-        double robotHeading = robotPose.heading();
-        double pivotX = robotPose.x()
-                + Math.cos(robotHeading) * GlobalConstants.TURRET_PIVOT_FORWARD_INCHES
-                - Math.sin(robotHeading) * GlobalConstants.TURRET_PIVOT_LEFT_INCHES;
-        double pivotY = robotPose.y()
-                + Math.sin(robotHeading) * GlobalConstants.TURRET_PIVOT_FORWARD_INCHES
-                + Math.cos(robotHeading) * GlobalConstants.TURRET_PIVOT_LEFT_INCHES;
-
-        // A boca acompanha a direção da torre, além da rotação do próprio chassi.
-        double muzzleHeading = robotHeading + Math.toRadians(getControlAngleDegrees());
-        double muzzleX = pivotX
-                + Math.cos(muzzleHeading) * GlobalConstants.SHOOTER_MUZZLE_FORWARD_INCHES
-                - Math.sin(muzzleHeading) * GlobalConstants.SHOOTER_MUZZLE_LEFT_INCHES;
-        double muzzleY = pivotY
-                + Math.sin(muzzleHeading) * GlobalConstants.SHOOTER_MUZZLE_FORWARD_INCHES
-                + Math.cos(muzzleHeading) * GlobalConstants.SHOOTER_MUZZLE_LEFT_INCHES;
-
-        // A velocidade angular também move a boca: v_boca = v_centro + omega x raio.
-        double muzzleRadiusX = muzzleX - robotPose.x();
-        double muzzleRadiusY = muzzleY - robotPose.y();
-        double muzzleVelocityX = fieldVelocityX - angularVelocity * muzzleRadiusY;
-        double muzzleVelocityY = fieldVelocityY + angularVelocity * muzzleRadiusX;
-
-        double directX = targetX - muzzleX;
-        double directY = targetY - muzzleY;
-        estimatedFlightTimeSeconds = compensateMotion
-                ? GlobalConstants.MOVING_SHOT_FLIGHT_TIME_SECONDS : 0.0;
-
-        // Em t segundos, a boca avança v*t. O vetor de mira aponta ao alvo visto desse ponto futuro.
-        double deltaX = directX - muzzleVelocityX * estimatedFlightTimeSeconds;
-        double deltaY = directY - muzzleVelocityY * estimatedFlightTimeSeconds;
-        compensatedAimX = muzzleX + deltaX;
-        compensatedAimY = muzzleY + deltaY;
-        // O hood recebe a distância real até o alvo; o vetor adiantado é usado só para a direção.
-        targetDistanceInches = Math.hypot(directX, directY);
-
-        double fieldBearingRadians = Math.atan2(deltaY, deltaX); // atan2 escolhe o quadrante correto do alvo no campo.
+        double deltaX = targetX - robotPose.x();
+        double deltaY = targetY - robotPose.y();
+        double fieldBearingRadians = Math.atan2(deltaY, deltaX); // Usa somente a pose atual do Pinpoint.
         targetGlobalBearingDegrees = Math.toDegrees(MathUtils.wrapRadians(fieldBearingRadians));
         double relativeBearingRadians = MathUtils.wrapRadians(fieldBearingRadians - robotPose.heading()); // Remove a rotação atual do robô.
         double relativeBearingDegrees = Math.toDegrees(relativeBearingRadians); // Converte radianos para a unidade do encoder.
@@ -359,26 +295,6 @@ public final class Turret extends SubsystemBase {
     /** Devolve a coordenada Y atual do alvo, já refletida se o robô cruzou a linha central. */
     public double getTargetY() {
         return targetY; // Útil para conferir em telemetria a troca de metade do campo.
-    }
-
-    /** Devolve a distância até o alvo para o subsistema do shooter/hood. */
-    public double getTargetDistanceInches() {
-        return targetDistanceInches; // A unidade é polegadas, igual às poses do Pedro.
-    }
-
-    /** Coordenada X do ponto compensado que a turret está mirando. */
-    public double getCompensatedAimX() {
-        return compensatedAimX;
-    }
-
-    /** Coordenada Y do ponto compensado que a turret está mirando. */
-    public double getCompensatedAimY() {
-        return compensatedAimY;
-    }
-
-    /** Tempo de voo aplicado à correção atual; zero indica mira estática. */
-    public double getEstimatedFlightTimeSeconds() {
-        return estimatedFlightTimeSeconds;
     }
 
     /** Para o motor da torre com potência zero. */

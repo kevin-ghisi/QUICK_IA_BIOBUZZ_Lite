@@ -8,7 +8,6 @@ import org.firstinspires.ftc.teamcode.commandbase.subsystem.FlowerCollector;
 import org.firstinspires.ftc.teamcode.commandbase.subsystem.GamePieceCoordinator;
 import org.firstinspires.ftc.teamcode.commandbase.subsystem.MagazineSensors;
 import org.firstinspires.ftc.teamcode.commandbase.subsystem.DriverFeedback;
-import org.firstinspires.ftc.teamcode.commandbase.subsystem.Hood;
 import org.firstinspires.ftc.teamcode.commandbase.subsystem.Intake;
 import org.firstinspires.ftc.teamcode.commandbase.subsystem.Shooter;
 import org.firstinspires.ftc.teamcode.commandbase.subsystem.Transfer;
@@ -20,7 +19,6 @@ public final class MyRobot {
     public final Intake intake;
     public final Transfer transfer;
     public final Turret turret;
-    public final Hood hood;
     public final Shooter shooter;
     public final FlowerCollector flowerCollector;
     public final BallGate ballGate;
@@ -34,8 +32,7 @@ public final class MyRobot {
         intake = new Intake(hardwareMap);
         transfer = new Transfer(hardwareMap);
         turret = new Turret(hardwareMap);
-        hood = new Hood(hardwareMap);
-        shooter = new Shooter(hardwareMap, hood);
+        shooter = new Shooter(hardwareMap);
         flowerCollector = new FlowerCollector(hardwareMap);
         ballGate = new BallGate(hardwareMap);
         magazine = new MagazineSensors(hardwareMap);
@@ -50,7 +47,6 @@ public final class MyRobot {
         intake.initialize();
         transfer.initialize();
         turret.initialize();
-        hood.initialize();
         shooter.initialize();
         flowerCollector.initialize();
         ballGate.initialize();

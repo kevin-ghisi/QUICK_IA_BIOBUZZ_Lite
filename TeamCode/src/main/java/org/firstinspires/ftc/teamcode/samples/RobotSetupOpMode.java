@@ -84,7 +84,7 @@ public class RobotSetupOpMode extends OpMode {
         telemetry.addLine("Gamepad 1 A inicia homing da turret; B interrompe a sequência.");
         telemetry.addLine("Gamepad 2 D-pad escolhe servo; ←/→ ajusta; A/B registra mínimo/máximo.");
         telemetry.addLine("Sensor da boca do intake: confira distância em mm e limiar no V3 Quick Start.");
-        telemetry.addLine("Prenda o robô e mantenha rodas, torre e hood sem obstruções.");
+        telemetry.addLine("Prenda o robô e mantenha rodas e torre sem obstruções.");
         telemetry.update();
     }
 

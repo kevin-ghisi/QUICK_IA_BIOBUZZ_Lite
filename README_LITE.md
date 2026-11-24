@@ -8,10 +8,10 @@ Projeto FTC simplificado a partir do branch `V4` do `QUICK_IA_BIOBUZZ`. As bibli
 - `TeamCode/.../hardware/MyRobot.java`: ponto único que monta os subsistemas.
 - `TeamCode/.../hardware/AutoPoseHandoff.java`: transferência de uso único da pose entre OpModes.
 - `TeamCode/.../pedroPathing/Constants.java`: configuração Pedro Mecanum, Pinpoint e Foresight.
-- `TeamCode/.../commandbase/subsystem/`: drive, intake, transfer, torre, shooter, hood, ball gate, flower collector, sensor e feedback Blinkin.
-- `TeamCode/.../opmodes/TeleOp_All.java`: teleop de partida e controles individuais.
+- `TeamCode/.../commandbase/subsystem/`: drive, intake, transfer, torre, shooter, ball gate, flower collector, sensor e feedback Blinkin.
+- `TeamCode/.../opmodes/TeleOp_All.java`: teleop completo para um operador no Gamepad 1.
 - `TeamCode/.../opmodes/Auto_PoseHandoff.java`: rota simples que entrega a pose final ao TeleOp.
-- `TeamCode/.../util/`: matemática, seleção de alvo, estimativa de movimento, previsão de mira e relógio monotônico.
+- `TeamCode/.../util/`: matemática, seleção de alvo e relógio monotônico.
 
 ## Controles
 
@@ -26,15 +26,14 @@ Projeto FTC simplificado a partir do branch `V4` do `QUICK_IA_BIOBUZZ`. As bibli
 | 1 | RB | Alternar mira automática da torre |
 | 1 | BACK | Redefinir a pose do robô para `(135 in, 81 in, 90°)` |
 | 1 | START | Gravar o zero frontal da torre com chassi e torre parados e mira desligada |
-| 2 | A/B/X | Intake para frente / reverso / parar |
-| 2 | Y/LB/RB | Transfer para frente / reverso / parar |
-| 2 | RT/LT | Shooter para frente / parar |
-| 2 | D-pad cima/baixo | Implantar / recolher flower collector |
-| 2 | D-pad direita/esquerda | Abrir / fechar ball gate |
-| 2 | Stick esquerdo horizontal | Controle manual da torre; desliga a mira automática |
-| 2 | START/BACK | Ajustar o hood em passos pequenos |
+| 1 | D-pad cima/baixo | Implantar / recolher flower collector |
+| 1 | D-pad direita/esquerda | Abrir / fechar ball gate |
+| 1, segurar LB | A/B/X | Intake para frente / reverso / parar |
+| 1, segurar LB | D-pad direita/esquerda/baixo | Transfer para frente / reverso / parar |
+| 1, segurar LB | RT/LT | Shooter para frente / parar |
+| 1, segurar LB | Stick direito horizontal | Controle manual da torre; desliga a mira automática |
 
-O alvo da torre acompanha a aliança selecionada e muda para a coordenada refletida ao cruzar a linha central, com histerese para reduzir oscilações. A mira automática só se move depois de um zero frontal válido. `BACK` redefine a pose do Pinpoint/Pedro para a localização fixa; `START` é a ação separada que grava o zero do encoder da torre.
+O alvo da torre acompanha a aliança selecionada e muda para a coordenada refletida ao cruzar a linha central, com histerese para reduzir oscilações. A mira usa a pose atual estimada pelo Pinpoint, sem prever movimento futuro. A mira automática só se move depois de um zero frontal válido. `BACK` redefine a pose do Pinpoint/Pedro para a localização fixa; `START` é a ação separada que grava o zero do encoder da torre.
 
 ## Mecanismos e valores migrados
 

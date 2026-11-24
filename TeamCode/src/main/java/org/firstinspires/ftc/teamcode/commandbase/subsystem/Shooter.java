@@ -14,7 +14,6 @@ public final class Shooter extends SubsystemBase {
     public enum State { FORWARD, REVERSE, STOP }
 
     private final MotorEx motor;
-    private final Hood hood;
     private final PIDFController velocityController = new PIDFController(0.11, 0, 0, 0.001);
     private State state = State.STOP;
     private double appliedVelocityTargetTicksPerSecond;
@@ -24,8 +23,7 @@ public final class Shooter extends SubsystemBase {
     private boolean hasCachedConfiguration;
 
     /** Constrói o shooter com hardware SolversLib e deixa o encoder disponível ao PIDF. */
-    public Shooter(HardwareMap hardwareMap, Hood hood) {
-        this.hood = hood;
+    public Shooter(HardwareMap hardwareMap) {
         motor = new MotorEx(hardwareMap, GlobalConstants.SHOOTER_MOTOR_NAME);
         motor.setRunMode(Motor.RunMode.RawPower);
         motor.setInverted(GlobalConstants.SHOOTER_MOTOR_REVERSED);
@@ -97,6 +95,4 @@ public final class Shooter extends SubsystemBase {
     /** Encerra o modo de bancada com potência zero. */
     public void stop() { setState(State.STOP); }
 
-    /** Ajusta o hood pela tabela calibrada de distância ao alvo. */
-    public void updateHoodForDistance(double distanceInches) { hood.setForDistance(distanceInches); }
 }
